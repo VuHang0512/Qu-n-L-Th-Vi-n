@@ -1,0 +1,98 @@
+-- Tạo cơ sở dữ liệu
+CREATE DATABASE IF NOT EXISTS library_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE library_db;
+
+-- Bảng danh mục sách
+CREATE TABLE IF NOT EXISTS categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Bảng sách
+CREATE TABLE IF NOT EXISTS books (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    isbn VARCHAR(20) UNIQUE,
+    title VARCHAR(255) NOT NULL,
+    author VARCHAR(150) NOT NULL,
+    publisher VARCHAR(150),
+    category_id INT,
+    quantity INT DEFAULT 1,
+    available INT DEFAULT 1,
+    location VARCHAR(50),
+    description TEXT,
+    cover_image VARCHAR(255),
+    published_year INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- Bảng độc giả
+CREATE TABLE IF NOT EXISTS members (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    member_code VARCHAR(20) UNIQUE NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100),
+    phone VARCHAR(20),
+    address TEXT,
+    id_card VARCHAR(20),
+    membership_date DATE DEFAULT (CURRENT_DATE),
+    expiry_date DATE,
+    status ENUM('active', 'inactive', 'suspended') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Bảng mượn trả sách
+CREATE TABLE IF NOT EXISTS borrowings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    member_id INT NOT NULL,
+    book_id INT NOT NULL,
+    borrow_date DATE NOT NULL,
+    due_date DATE NOT NULL,
+    return_date DATE,
+    status ENUM('borrowed', 'returned', 'overdue') DEFAULT 'borrowed',
+    notes TEXT,
+    fine_amount DECIMAL(10,2) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
+    FOREIGN KEY (book_id) REFERENCES books(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- Bảng người dùng hệ thống
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    full_name VARCHAR(100),
+    email VARCHAR(100),
+    role ENUM('admin', 'librarian') DEFAULT 'librarian',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Thêm dữ liệu mẫu
+INSERT INTO categories (name, description) VALUES
+('Văn học', 'Sách văn học trong và ngoài nước'),
+('Khoa học', 'Sách khoa học tự nhiên và ứng dụng'),
+('Lịch sử', 'Sách về lịch sử Việt Nam và thế giới'),
+('Kinh tế', 'Sách kinh tế, kinh doanh'),
+('Công nghệ', 'Sách về công nghệ thông tin'),
+('Thiếu nhi', 'Sách dành cho thiếu nhi');
+
+INSERT INTO books (isbn, title, author, publisher, category_id, quantity, available, location, published_year) VALUES
+('978-604-1-001', 'Dế Mèn Phiêu Lưu Ký', 'Tô Hoài', 'NXB Kim Đồng', 1, 5, 5, 'Kệ A1', 1941),
+('978-604-1-002', 'Truyện Kiều', 'Nguyễn Du', 'NXB Văn Học', 1, 3, 3, 'Kệ A1', 1820),
+('978-604-1-003', 'Lược Sử Thời Gian', 'Stephen Hawking', 'NXB Trẻ', 2, 2, 2, 'Kệ B1', 1988),
+('978-604-1-004', 'Đắc Nhân Tâm', 'Dale Carnegie', 'NXB Tổng Hợp', 4, 4, 4, 'Kệ C1', 1936),
+('978-604-1-005', 'Nhà Giả Kim', 'Paulo Coelho', 'NXB Văn Học', 1, 3, 3, 'Kệ A2', 1988),
+('978-604-1-006', 'Clean Code', 'Robert C. Martin', 'NXB Thế Giới', 5, 2, 2, 'Kệ D1', 2008);
+
+INSERT INTO members (member_code, full_name, email, phone, address, expiry_date) VALUES
+('TV001', 'Nguyễn Văn An', 'an.nguyen@email.com', '0901234567', 'Hà Nội', DATE_ADD(CURRENT_DATE, INTERVAL 1 YEAR)),
+('TV002', 'Trần Thị Bình', 'binh.tran@email.com', '0912345678', 'TP.HCM', DATE_ADD(CURRENT_DATE, INTERVAL 1 YEAR)),
+('TV003', 'Lê Hoàng Cường', 'cuong.le@email.com', '0923456789', 'Đà Nẵng', DATE_ADD(CURRENT_DATE, INTERVAL 1 YEAR));
+
+-- Tạo tài khoản admin mặc định (mật khẩu: admin123)
+INSERT INTO users (username, password, full_name, email, role) VALUES
+('admin', '$2y$10$mC7p9X6LslWpYI66r6EBR.uD0.H.3t.Y5YvWvO6B4vXp8U6F6E6m.', 'Quản trị viên', 'admin@library.com', 'admin');
